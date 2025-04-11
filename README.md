@@ -1,3 +1,14 @@
+Group Members
+1.Shadrack Okoth 
+okothshadrack6@gmail.com
+
+2. Kelvin Kamau 
+waigirikelvin2@gmail.com
+
+Miriam Mwangi
+mwangimarion862@gmail.com
+
+
 # Database-Group-Work
 
 
