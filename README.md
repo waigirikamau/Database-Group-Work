@@ -6,7 +6,7 @@ okothshadrack6@gmail.com
 2. Kelvin Kamau 
 waigirikelvin2@gmail.com
 
-Miriam Mwangi
+3. Miriam Mwangi
 mwangimarion862@gmail.com
 
 
