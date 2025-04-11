@@ -1,0 +1,408 @@
+-- Question 1
+CREATE DATABASE bookstoredb;
+USE  bookstoredb;
+
+-- Create the country table
+CREATE TABLE country (
+    country_id INT AUTO_INCREMENT PRIMARY KEY,
+    country_name VARCHAR(100) NOT NULL,
+    country_code CHAR(2) NOT NULL
+);
+-- Create the address table
+CREATE TABLE address (
+    address_id INT AUTO_INCREMENT PRIMARY KEY,
+    street VARCHAR(255) NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    state VARCHAR(100),
+    postal_code VARCHAR(20) NOT NULL,
+    country_id INT NOT NULL,
+    FOREIGN KEY (country_id) REFERENCES country(country_id)
+);
+-- Create the address_status table
+CREATE TABLE address_status (
+    status_id INT AUTO_INCREMENT PRIMARY KEY,
+    status_name VARCHAR(50) NOT NULL,
+    description VARCHAR(255)
+);
+-- Create the customer table
+CREATE TABLE customer (
+    customer_id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    phone VARCHAR(20),
+    registration_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    active BOOLEAN DEFAULT TRUE
+);
+-- Create the customer_address table (linking customers to addresses)
+CREATE TABLE customer_address (
+    customer_address_id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    address_id INT NOT NULL,
+    status_id INT NOT NULL,
+    is_default BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id),
+    FOREIGN KEY (address_id) REFERENCES address(address_id),
+    FOREIGN KEY (status_id) REFERENCES address_status(status_id)
+-- Create the publisher table
+CREATE TABLE publisher (
+    publisher_id INT AUTO_INCREMENT PRIMARY KEY,
+    publisher_name VARCHAR(255) NOT NULL,
+    contact_name VARCHAR(100),
+    contact_email VARCHAR(255),
+    contact_phone VARCHAR(20),
+    address_id INT,
+    FOREIGN KEY (address_id) REFERENCES address(address_id)
+);
+-- Create the book_language table
+CREATE TABLE book_language (
+    language_id INT AUTO_INCREMENT PRIMARY KEY,
+    language_code CHAR(2) NOT NULL,
+    language_name VARCHAR(50) NOT NULL
+);
+-- Create the author table
+CREATE TABLE author (
+    author_id INT AUTO_INCREMENT PRIMARY KEY,
+    author_name VARCHAR(255) NOT NULL,
+    biography TEXT,
+    birth_date DATE,
+    death_date DATE,
+    website VARCHAR(255)
+);
+-- Create the book table
+CREATE TABLE book (
+    book_id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    isbn VARCHAR(20) UNIQUE,
+    publication_date DATE,
+    price DECIMAL(10, 2) NOT NULL,
+    description TEXT,
+    page_count INT,
+    cover_image VARCHAR(255),
+    publisher_id INT,
+    language_id INT NOT NULL,
+    stock_quantity INT DEFAULT 0,
+    FOREIGN KEY (publisher_id) REFERENCES publisher(publisher_id),
+    FOREIGN KEY (language_id) REFERENCES book_language(language_id)
+);
+-- Create the book_author table (linking books to authors - many-to-many relationship)
+CREATE TABLE book_author (
+    book_author_id INT AUTO_INCREMENT PRIMARY KEY,
+    book_id INT NOT NULL,
+    author_id INT NOT NULL,
+    FOREIGN KEY (book_id) REFERENCES book(book_id),
+    FOREIGN KEY (author_id) REFERENCES author(author_id),
+    UNIQUE (book_id, author_id)
+);
+-- Create the order_status table
+CREATE TABLE order_status (
+    status_id INT AUTO_INCREMENT PRIMARY KEY,
+    status_name VARCHAR(50) NOT NULL,
+    description VARCHAR(255)
+);
+-- Create the shipping_method table
+CREATE TABLE shipping_method (
+    shipping_id INT AUTO_INCREMENT PRIMARY KEY,
+    method_name VARCHAR(100) NOT NULL,
+    cost DECIMAL(10, 2) NOT NULL,
+    estimated_days INT
+);
+-- Create the cust_order table
+CREATE TABLE cust_order (
+    order_id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    shipping_address_id INT NOT NULL,
+    billing_address_id INT NOT NULL,
+    shipping_method_id INT NOT NULL,
+    order_status_id INT NOT NULL,
+    total_amount DECIMAL(10, 2) NOT NULL,
+    payment_method VARCHAR(50),
+    payment_status VARCHAR(50),
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id),
+    FOREIGN KEY (shipping_address_id) REFERENCES address(address_id),
+    FOREIGN KEY (billing_address_id) REFERENCES address(address_id),
+    FOREIGN KEY (shipping_method_id) REFERENCES shipping_method(shipping_id),
+    FOREIGN KEY (order_status_id) REFERENCES order_status(status_id)
+);
+-- Create the order_line table
+CREATE TABLE order_line (
+    order_line_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    book_id INT NOT NULL,
+    quantity INT NOT NULL,
+    unit_price DECIMAL(10, 2) NOT NULL,
+    line_total DECIMAL(10, 2) GENERATED ALWAYS AS (quantity * unit_price) STORED,
+    FOREIGN KEY (order_id) REFERENCES cust_order(order_id),
+    FOREIGN KEY (book_id) REFERENCES book(book_id)
+);
+-- Create the order_history table
+CREATE TABLE order_history (
+    history_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    status_id INT NOT NULL,
+    status_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    comments TEXT,
+    FOREIGN KEY (order_id) REFERENCES cust_order(order_id),
+    FOREIGN KEY (status_id) REFERENCES order_status(status_id)
+);
+
+-- INSERTING DATA INTO THE TABLES
+
+-- Insert data into country table
+INSERT INTO country (country_name, country_code) VALUES 
+('United States', 'US'),
+('United Kingdom', 'GB'),
+('Canada', 'CA'),
+('Australia', 'AU'),
+('Germany', 'DE'),
+('France', 'FR'),
+('Japan', 'JP'),
+('Italy', 'IT'),
+('Spain', 'ES'),
+('Netherlands', 'NL');
+
+-- Insert data into address table
+INSERT INTO address (street, city, state, postal_code, country_id) VALUES 
+('123 Main St', 'New York', 'NY', '10001', 1),
+('456 Park Ave', 'Los Angeles', 'CA', '90001', 1),
+('789 Maple Rd', 'Toronto', 'ON', 'M5V 2L7', 3),
+('10 Downing St', 'London', NULL, 'SW1A 2AA', 2),
+('42 Wallaby Way', 'Sydney', 'NSW', '2000', 4),
+('1010 Fifth Ave', 'Seattle', 'WA', '98101', 1),
+('555 Rue de Paris', 'Paris', NULL, '75001', 6),
+('777 Berlin Strasse', 'Berlin', NULL, '10115', 5),
+('888 Tokyo Blvd', 'Tokyo', NULL, '100-0001', 7),
+('999 Rome Via', 'Rome', NULL, '00184', 8);
+
+-- Insert data into address_status table
+INSERT INTO address_status (status_name, description) VALUES 
+('Active', 'Current valid address'),
+('Previous', 'Previous address no longer in use'),
+('Shipping', 'Address used for shipping only'),
+('Billing', 'Address used for billing only'),
+('Invalid', 'Address verified as invalid');
+
+-- Insert data into customer table
+INSERT INTO customer (first_name, last_name, email, phone, registration_date, active) VALUES 
+('John', 'Smith', 'john.smith@outlook.com', '212-555-1234', '2023-01-15 10:30:00', TRUE),
+('Emma', 'Johnson', 'emma.j@outlook.com', '415-555-6789', '2023-02-20 14:45:00', TRUE),
+('Michael', 'Williams', 'mwilliams@gmail.com', '647-555-1122', '2023-03-10 09:15:00', TRUE),
+('Sophia', 'Brown', 'sophia.brown@gmail.com', '020-7946-0958', '2023-01-05 16:20:00', TRUE),
+('Oliver', 'Jones', 'oliver.jones@outlook.com', '612-555-3344', '2023-04-25 11:10:00', TRUE),
+('Isabella', 'Garcia', 'isabella.g@gmail.com', '206-555-7890', '2023-03-22 13:40:00', FALSE),
+('William', 'Miller', 'w.miller@gmail.com', '331-555-4567', '2023-02-18 15:30:00', TRUE),
+('Charlotte', 'Davis', 'charlotte.d@outlook.com', '491-555-8901', '2023-05-12 10:05:00', TRUE),
+('James', 'Rodriguez', 'james.r@yahoo.com', '813-555-2233', '2023-01-30 12:50:00', TRUE),
+('Amelia', 'Martinez', 'amelia.m@gmail.com', '063-555-4455', '2023-04-08 09:25:00', TRUE);
+
+-- Insert data into customer_address table
+INSERT INTO customer_address (customer_id, address_id, status_id, is_default) VALUES 
+(1, 1, 1, TRUE),
+(2, 2, 1, TRUE),
+(3, 3, 1, TRUE),
+(4, 4, 1, TRUE),
+(5, 5, 1, TRUE),
+(6, 6, 1, TRUE),
+(7, 7, 1, TRUE),
+(8, 8, 1, TRUE),
+(9, 9, 1, TRUE),
+(10, 10, 1, TRUE),
+(1, 6, 3, FALSE),
+(2, 7, 4, FALSE),
+(3, 8, 2, FALSE);
+
+-- Insert data into publisher table
+INSERT INTO publisher (publisher_name, contact_name, contact_email, contact_phone, address_id) VALUES 
+('Penguin Random House', 'Robert Johnson', 'rjohnson@prh.com', '212-555-9876', 1),
+('HarperCollins', 'Susan Miller', 'susan.miller@hc.com', '415-555-4321', 2),
+('Simon & Schuster', 'David Brown', 'dbrown@simonschuster.com', '647-555-8877', 3),
+('Macmillan Publishers', 'Elizabeth Wilson', 'ewilson@macmillan.com', '020-7946-1234', 4),
+('Oxford University Press', 'Richard Taylor', 'rtaylor@oup.com', '612-555-6677', 5);
+
+-- Insert data into book_language table
+INSERT INTO book_language (language_code, language_name) VALUES 
+('EN', 'English'),
+('ES', 'Spanish'),
+('FR', 'French'),
+('DE', 'German'),
+('IT', 'Italian'),
+('JA', 'Japanese'),
+('ZH', 'Chinese'),
+('RU', 'Russian'),
+('AR', 'Arabic'),
+('PT', 'Portuguese');
+
+-- Insert data into author table
+INSERT INTO author (author_name, biography, birth_date, death_date, website) VALUES 
+('J.K. Rowling', 'British author best known for the Harry Potter series', '1965-07-31', NULL, 'https://www.jkrowling.com'),
+('Stephen King', 'American author of horror, supernatural fiction, and fantasy', '1947-09-21', NULL, 'https://www.stephenking.com'),
+('Jane Austen', 'English novelist known for her six major novels', '1775-12-16', '1817-07-18', NULL),
+('George Orwell', 'English novelist, essayist, and critic', '1903-06-25', '1950-01-21', NULL),
+('Agatha Christie', 'English writer known for her detective novels', '1890-09-15', '1976-01-12', 'https://www.agathachristie.com'),
+('Ernest Hemingway', 'American novelist and short story writer', '1899-07-21', '1961-07-02', NULL),
+('Mark Twain', 'American writer, humorist, and lecturer', '1835-11-30', '1910-04-21', NULL),
+('Virginia Woolf', 'English writer and modernist', '1882-01-25', '1941-03-28', NULL),
+('Gabriel García Márquez', 'Colombian novelist and Nobel Prize winner', '1927-03-06', '2014-04-17', NULL),
+('Toni Morrison', 'American novelist and Nobel Prize winner', '1931-02-18', '2019-08-05', NULL);
+
+-- Insert data into book table
+INSERT INTO book (title, isbn, publication_date, price, description, page_count, cover_image, publisher_id, language_id, stock_quantity) VALUES 
+('Harry Potter and the Philosopher\'s Stone', '9780747532743', '1997-06-26', 19.99, 'The first novel in the Harry Potter series', 223, 'harry_potter_1.jpg', 1, 1, 150),
+('The Shining', '9780385121675', '1977-01-28', 15.99, 'A horror novel by Stephen King', 447, 'the_shining.jpg', 2, 1, 75),
+('Pride and Prejudice', '9780141439518', '1813-01-28', 9.99, 'A romantic novel by Jane Austen', 432, 'pride_and_prejudice.jpg', 3, 1, 100),
+('1984', '9780451524935', '1949-06-08', 12.99, 'A dystopian social science fiction novel', 328, '1984.jpg', 4, 1, 120),
+('Murder on the Orient Express', '9780062073501', '1934-01-01', 11.99, 'A detective novel by Agatha Christie', 256, 'orient_express.jpg', 5, 1, 90),
+('The Old Man and the Sea', '9780684801223', '1952-09-01', 10.99, 'A short novel by Ernest Hemingway', 127, 'old_man_sea.jpg', 1, 1, 60),
+('Adventures of Huckleberry Finn', '9780486280615', '1884-12-10', 8.99, 'A novel by Mark Twain', 366, 'huckleberry_finn.jpg', 2, 1, 85),
+('To the Lighthouse', '9780156907392', '1927-05-05', 13.99, 'A novel by Virginia Woolf', 209, 'to_the_lighthouse.jpg', 3, 1, 45),
+('One Hundred Years of Solitude', '9780060883287', '1967-05-30', 14.99, 'A novel by Gabriel García Márquez', 417, 'one_hundred_years.jpg', 4, 1, 70),
+('Beloved', '9781400033416', '1987-09-02', 16.99, 'A novel by Toni Morrison', 324, 'beloved.jpg', 5, 1, 55),
+('The Great Gatsby', '9780743273565', '1925-04-10', 12.99, 'A novel by F. Scott Fitzgerald', 180, 'great_gatsby.jpg', 1, 1, 95),
+('Don Quixote', '9780060934347', '1605-01-16', 18.99, 'A Spanish novel by Miguel de Cervantes', 982, 'don_quixote.jpg', 2, 2, 40),
+('Les Misérables', '9780451419439', '1862-01-01', 21.99, 'A French historical novel by Victor Hugo', 1463, 'les_miserables.jpg', 3, 3, 30);
+
+-- Insert data into book_author table
+INSERT INTO book_author (book_id, author_id) VALUES 
+(1, 1), -- Harry Potter - J.K. Rowling
+(2, 2), -- The Shining - Stephen King
+(3, 3), -- Pride and Prejudice - Jane Austen
+(4, 4), -- 1984 - George Orwell
+(5, 5), -- Murder on the Orient Express - Agatha Christie
+(6, 6), -- The Old Man and the Sea - Ernest Hemingway
+(7, 7), -- Adventures of Huckleberry Finn - Mark Twain
+(8, 8), -- To the Lighthouse - Virginia Woolf
+(9, 9), -- One Hundred Years of Solitude - Gabriel García Márquez
+(10, 10); -- Beloved - Toni Morrison
+
+-- Insert data into order_status table
+INSERT INTO order_status (status_name, description) VALUES 
+('Pending', 'Order has been placed but not yet processed'),
+('Processing', 'Order is being processed'),
+('Shipped', 'Order has been shipped'),
+('Delivered', 'Order has been delivered'),
+('Cancelled', 'Order has been cancelled'),
+('Returned', 'Order has been returned'),
+('On Hold', 'Order is on hold');
+
+-- Insert data into shipping_method table
+INSERT INTO shipping_method (method_name, cost, estimated_days) VALUES 
+('Standard Shipping', 4.99, 5),
+('Express Shipping', 9.99, 2),
+('One-Day Shipping', 14.99, 1),
+('International Standard', 12.99, 14),
+('International Express', 24.99, 7),
+('Local Pickup', 0.00, 0);
+
+-- Insert data into cust_order table
+INSERT INTO cust_order (customer_id, order_date, shipping_address_id, billing_address_id, shipping_method_id, order_status_id, total_amount, payment_method, payment_status) VALUES 
+(1, '2023-06-01 10:15:00', 1, 1, 1, 3, 24.98, 'Credit Card', 'Paid'),
+(2, '2023-06-02 14:30:00', 2, 2, 2, 3, 41.97, 'PayPal', 'Paid'),
+(3, '2023-06-03 09:45:00', 3, 3, 1, 4, 19.99, 'Credit Card', 'Paid'),
+(4, '2023-06-04 16:20:00', 4, 4, 3, 2, 28.98, 'Credit Card', 'Paid'),
+(5, '2023-06-05 11:10:00', 5, 5, 1, 1, 15.99, 'PayPal', 'Pending'),
+(6, '2023-06-06 13:40:00', 6, 6, 2, 5, 32.97, 'Credit Card', 'Refunded'),
+(7, '2023-06-07 15:30:00', 7, 7, 4, 2, 25.98, 'Credit Card', 'Paid'),
+(8, '2023-06-08 10:05:00', 8, 8, 1, 3, 19.98, 'PayPal', 'Paid'),
+(9, '2023-06-09 12:50:00', 9, 9, 2, 4, 44.97, 'Credit Card', 'Paid'),
+(10, '2023-06-10 09:25:00', 10, 10, 1, 1, 29.98, 'PayPal', 'Pending');
+
+-- Insert data into order_line table
+INSERT INTO order_line (order_id, book_id, quantity, unit_price) VALUES 
+(1, 1, 1, 19.99),
+(1, 3, 1, 9.99),
+(2, 2, 1, 15.99),
+(2, 4, 1, 12.99),
+(2, 5, 1, 11.99),
+(3, 1, 1, 19.99),
+(4, 6, 1, 10.99),
+(4, 7, 2, 8.99),
+(5, 2, 1, 15.99),
+(6, 8, 1, 13.99),
+(6, 9, 1, 14.99),
+(7, 10, 1, 16.99),
+(7, 3, 1, 9.99),
+(8, 4, 1, 12.99),
+(8, 5, 1, 11.99),
+(9, 1, 1, 19.99),
+(9, 2, 1, 15.99),
+(9, 9, 1, 14.99),
+(10, 6, 1, 10.99),
+(10, 7, 1, 8.99),
+(10, 10, 1, 16.99);
+
+
+-- Insert data into order_history table
+INSERT INTO order_history (order_id, status_id, status_date, comments) VALUES 
+(1, 1, '2023-06-01 10:15:00', 'Order placed'),
+(1, 2, '2023-06-01 14:20:00', 'Order processed'),
+(1, 3, '2023-06-02 09:30:00', 'Order shipped via USPS'),
+(2, 1, '2023-06-02 14:30:00', 'Order placed'),
+(2, 2, '2023-06-02 16:45:00', 'Order processed'),
+(2, 3, '2023-06-03 10:15:00', 'Order shipped via FedEx'),
+(3, 1, '2023-06-03 09:45:00', 'Order placed'),
+(3, 2, '2023-06-03 13:10:00', 'Order processed'),
+(3, 3, '2023-06-04 08:30:00', 'Order shipped via UPS'),
+(3, 4, '2023-06-06 14:20:00', 'Order delivered'),
+(4, 1, '2023-06-04 16:20:00', 'Order placed'),
+(4, 2, '2023-06-05 10:30:00', 'Order processed'),
+(5, 1, '2023-06-05 11:10:00', 'Order placed'),
+(6, 1, '2023-06-06 13:40:00', 'Order placed'),
+(6, 2, '2023-06-06 15:55:00', 'Order processed'),
+(6, 5, '2023-06-07 09:15:00', 'Order cancelled by customer'),
+(7, 1, '2023-06-07 15:30:00', 'Order placed'),
+(7, 2, '2023-06-08 11:20:00', 'Order processed'),
+(8, 1, '2023-06-08 10:05:00', 'Order placed'),
+(8, 2, '2023-06-08 14:30:00', 'Order processed'),
+(8, 3, '2023-06-09 09:45:00', 'Order shipped via USPS'),
+(9, 1, '2023-06-09 12:50:00', 'Order placed'),
+(9, 2, '2023-06-09 16:15:00', 'Order processed'),
+(9, 3, '2023-06-10 10:30:00', 'Order shipped via FedEx'),
+(9, 4, '2023-06-12 13:45:00', 'Order delivered'),
+(10, 1, '2023-06-10 09:25:00', 'Order placed');
+
+-- Create user roles
+CREATE ROLE IF NOT EXISTS 'bookstore_admin', 'bookstore_manager', 'bookstore_staff', 'bookstore_readonly';
+
+-- Grant permissions to roles
+GRANT ALL PRIVILEGES ON BookStore.* TO 'bookstore_admin';
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON BookStore.* TO 'bookstore_manager';
+
+GRANT SELECT, INSERT, UPDATE ON BookStoredb.book TO 'bookstore_staff';
+GRANT SELECT, INSERT, UPDATE ON BookStoredb.cust_order TO 'bookstore_staff';
+GRANT SELECT, INSERT, UPDATE ON BookStoredb.order_line TO 'bookstore_staff';
+GRANT SELECT ON BookStoredb.customer TO 'bookstore_staff';
+
+GRANT SELECT ON BookStoredb.* TO 'bookstore_readonly';
+
+-- Add indexes for performance optimization
+CREATE INDEX idx_book_title ON book(title);
+CREATE INDEX idx_book_isbn ON book(isbn);
+CREATE INDEX idx_author_name ON author(author_name);
+CREATE INDEX idx_customer_email ON customer(email);
+CREATE INDEX idx_order_date ON cust_order(order_date);
+CREATE INDEX idx_order_customer ON cust_order(customer_id);
+
+-- Test the database by running queries to retrieve and analyze the data
+-- Find the best-selling books
+USE bookstoredb;
+SELECT 
+    b.title,
+    SUM(ol.quantity) AS total_sold
+FROM order_line ol
+JOIN book b ON ol.book_id = b.book_id
+GROUP BY b.book_id
+ORDER BY total_sold DESC
+LIMIT 10;
+
+-- Get total revenue from all orders
+USE bookstoredb;
+SELECT 
+    SUM(total_amount) AS total_revenue
+FROM cust_order;
+
+-- Find all orders placed by a specific customer (e.g., customer_id = 1)
+USE bookstoredb;
+SELECT * FROM cust_order
+WHERE customer_id = 1;
